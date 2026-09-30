@@ -114,6 +114,16 @@
 		.insight-label { color: #428680; font: 700 10px Arial, sans-serif; letter-spacing: 1.4px; text-transform: uppercase; }
 		.insight h3 { margin: 10px 0 7px; font-size: 18px; font-weight: 500; }
 		.insight p { margin: 0; color: #52736f; font: 12px/1.5 Arial, sans-serif; }
+		dialog { width: min(440px, calc(100% - 32px)); border: 1px solid var(--line); border-radius: 12px; padding: 24px; color: var(--ink); box-shadow: 0 24px 70px rgba(20, 50, 50, .25); }
+		dialog::backdrop { background: rgba(12, 35, 36, .48); }
+		.dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+		.dialog-header h2 { margin: 0; font-size: 21px; font-weight: 500; }
+		.dialog-close { width: 32px; height: 32px; border: 0; border-radius: 7px; background: var(--canvas); color: var(--ink); cursor: pointer; font-size: 20px; }
+		.form-fields { display: grid; gap: 14px; }
+		.form-fields label { display: grid; gap: 6px; color: var(--muted); font: 12px Arial, sans-serif; }
+		.form-fields input, .form-fields select { width: 100%; min-height: 40px; border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; color: var(--ink); background: white; font: 14px Arial, sans-serif; }
+		.form-error { min-height: 17px; margin: 10px 0 0; color: #a05243; font: 12px Arial, sans-serif; }
+		.form-submit { width: 100%; margin-top: 10px; }
 		@media (max-width: 950px) { .sidebar { width: 204px; } .stats { grid-template-columns: repeat(2, 1fr); } .content-grid { grid-template-columns: 1fr; } }
 		@media (max-width: 650px) { .app { display: block; } .sidebar { width: 100%; padding: 16px; } .brand { margin: 0 4px 17px; } .nav-label, .sidebar-footer { display: none; } nav { display: flex; overflow-x: auto; gap: 3px; } .nav-item { padding: 9px 11px; white-space: nowrap; } main { padding: 25px 16px 32px; } .topbar { margin-bottom: 24px; } .top-actions { align-self: flex-start; } .top-actions .new-button { font-size: 0; padding: 11px; } .top-actions .new-button::before { content: '+'; font-size: 20px; } .appointment { grid-template-columns: 52px 9px minmax(0, 1fr); gap: 10px; } .status { display: none; } }
 	</style>
@@ -135,49 +145,163 @@
 
 		<main>
 			<header class="topbar">
-				<div><div class="eyebrow">Monday, September 19, 2026</div><h1>Good morning, Dr. Live</h1><p class="subtext">Here is what is happening at your clinic today.</p></div>
+				<div><div class="eyebrow" id="todayLabel"></div><h1>Good morning, Dr. Mehta</h1><p class="subtext">Here is what is happening at your clinic today.</p></div>
 				<div class="top-actions"><button class="icon-button" aria-label="Notifications">♢</button><button class="new-button" id="newAppointment">+ New appointment</button></div>
 			</header>
 
 			<section class="stats" aria-label="Clinic summary">
-				<article class="stat"><div class="stat-top"><span>Appointments today</span><span class="stat-icon">◷</span></div><div class="stat-value">24</div><span class="stat-change">↑ 12% from last Monday</span></article>
-				<article class="stat"><div class="stat-top"><span>Patients waiting</span><span class="stat-icon">♧</span></div><div class="stat-value">03</div><span class="stat-change neutral">Average wait 14 min</span></article>
-				<article class="stat"><div class="stat-top"><span>Completed visits</span><span class="stat-icon">✓</span></div><div class="stat-value">16</div><span class="stat-change">67% of today's schedule</span></article>
-				<article class="stat"><div class="stat-top"><span>Clinic rating</span><span class="stat-icon">♡</span></div><div class="stat-value">4.9</div><span class="stat-change">↑ 0.2 this month</span></article>
+				<article class="stat"><div class="stat-top"><span>Appointments today</span><span class="stat-icon">◷</span></div><div class="stat-value" id="appointmentCount">—</div><span class="stat-change" id="appointmentNote">Loading schedule</span></article>
+				<article class="stat"><div class="stat-top"><span>Patients waiting</span><span class="stat-icon">♧</span></div><div class="stat-value" id="waitingCount">—</div><span class="stat-change neutral">Currently checked in</span></article>
+				<article class="stat"><div class="stat-top"><span>Completed visits</span><span class="stat-icon">✓</span></div><div class="stat-value" id="completedCount">—</div><span class="stat-change" id="completedNote">Today's schedule</span></article>
+				<article class="stat"><div class="stat-top"><span>Clinic rating</span><span class="stat-icon">♡</span></div><div class="stat-value" id="clinicRating">4.9</div><span class="stat-change">Clinic profile</span></article>
 			</section>
 
 			<div class="content-grid">
 				<section class="panel">
-					<div class="panel-header"><div><h2 class="panel-title">Today's appointments</h2><p class="panel-note">Monday, September 19 · 24 appointments</p></div><button class="text-button">View all →</button></div>
-					<div class="schedule">
-						<div class="appointment"><span class="time">09:00 AM</span><span class="timeline-dot"></span><div class="patient"><div class="patient-avatar">AS</div><div><p class="patient-name">Amelia Stone</p><span class="patient-type">Annual checkup · 30 min</span></div></div><span class="status">Completed</span></div>
-						<div class="appointment"><span class="time">09:30 AM</span><span class="timeline-dot"></span><div class="patient"><div class="patient-avatar pink">JW</div><div><p class="patient-name">James Wilson</p><span class="patient-type">Follow-up consultation · 30 min</span></div></div><span class="status">Completed</span></div>
-						<div class="appointment"><span class="time">10:15 AM</span><span class="timeline-dot yellow"></span><div class="patient"><div class="patient-avatar gold">LK</div><div><p class="patient-name">Liam Kim</p><span class="patient-type">Vaccination · 15 min</span></div></div><span class="status waiting">Waiting</span></div>
-						<div class="appointment"><span class="time">11:00 AM</span><span class="timeline-dot coral"></span><div class="patient"><div class="patient-avatar pink">NP</div><div><p class="patient-name">Nora Patel</p><span class="patient-type">New patient consultation · 45 min</span></div></div><span class="status next">Up next</span></div>
-						<div class="appointment"><span class="time">11:45 AM</span><span class="timeline-dot"></span><div class="patient"><div class="patient-avatar">DR</div><div><p class="patient-name">Daniel Reed</p><span class="patient-type">Lab results review · 30 min</span></div></div><span class="status">Confirmed</span></div>
-					</div>
+					<div class="panel-header"><div><h2 class="panel-title">Today's appointments</h2><p class="panel-note" id="scheduleNote">Loading schedule</p></div></div>
+					<div class="schedule" id="appointmentList" aria-live="polite"></div>
 				</section>
 
 				<div>
-					<section class="panel calendar"><div class="panel-header" style="padding-left: 2px; padding-right: 2px;"><div><h2 class="panel-title">Your calendar</h2><p class="panel-note">Tap a date to view schedule</p></div></div><div class="calendar-nav"><span class="month">September 2026</span><div class="arrows"><button class="arrow" aria-label="Previous month">‹</button><button class="arrow" aria-label="Next month">›</button></div></div><div class="week"><span>SU</span><span>MO</span><span>TU</span><span>WE</span><span>TH</span><span>FR</span><span>SA</span></div><div class="days" id="calendarDays"></div></section>
-					<section class="insight"><span class="insight-label">Clinic insight</span><h3>Your afternoon is filling up.</h3><p>There are 6 open slots remaining after 2 PM. Consider opening one more slot for urgent visits.</p></section>
+					<section class="panel calendar"><div class="panel-header" style="padding-left: 2px; padding-right: 2px;"><div><h2 class="panel-title">Your calendar</h2><p class="panel-note">Tap a date to view schedule</p></div></div><div class="calendar-nav"><span class="month" id="calendarMonth"></span><div class="arrows"><button class="arrow" id="previousMonth" aria-label="Previous month">‹</button><button class="arrow" id="nextMonth" aria-label="Next month">›</button></div></div><div class="week"><span>SU</span><span>MO</span><span>TU</span><span>WE</span><span>TH</span><span>FR</span><span>SA</span></div><div class="days" id="calendarDays"></div></section>
+					<section class="insight"><span class="insight-label">Clinic insight</span><h3 id="insightTitle">Schedule overview</h3><p id="insightText">Loading today's schedule.</p></section>
 				</div>
 			</div>
 		</main>
 	</div>
+	<dialog id="appointmentDialog" aria-labelledby="appointmentDialogTitle">
+		<form id="appointmentForm">
+			<div class="dialog-header"><h2 id="appointmentDialogTitle">New appointment</h2><button class="dialog-close" type="button" id="closeAppointmentDialog" aria-label="Close">×</button></div>
+			<div class="form-fields">
+				<label>Patient name<input name="patientName" maxlength="100" required autocomplete="name"></label>
+				<label>Appointment type<input name="type" maxlength="100" required placeholder="e.g. Follow-up consultation"></label>
+				<label>Date<input name="date" type="date" required></label>
+				<label>Time<input name="time" type="time" required></label>
+				<label>Duration<select name="duration"><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>
+			</div>
+			<p class="form-error" id="formError" role="alert"></p>
+			<button class="new-button form-submit" type="submit">Create appointment</button>
+		</form>
+	</dialog>
 	<script>
-		const days = document.getElementById('calendarDays');
-		const eventDays = [3, 7, 10, 14, 19, 22, 24, 28];
-		const previousMonth = [30, 31];
-		previousMonth.forEach(day => { const button = document.createElement('button'); button.className = 'day muted'; button.textContent = day; days.appendChild(button); });
-		for (let day = 1; day <= 30; day += 1) {
-			const button = document.createElement('button');
-			button.className = `day${day === 19 ? ' selected' : ''}${eventDays.includes(day) ? ' has-event' : ''}`;
-			button.textContent = day;
-			button.addEventListener('click', () => { document.querySelectorAll('.day').forEach(item => item.classList.remove('selected')); button.classList.add('selected'); });
-			days.appendChild(button);
+		const appointmentList = document.getElementById('appointmentList');
+		const calendarDays = document.getElementById('calendarDays');
+		const appointmentDialog = document.getElementById('appointmentDialog');
+		const appointmentForm = document.getElementById('appointmentForm');
+		const today = new Date();
+		let selectedDate = dateKey(today);
+		let calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+		function dateKey(date) {
+			return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 		}
-		document.getElementById('newAppointment').addEventListener('click', () => alert('New appointment form coming right up.'));
+
+		function escapeHtml(value) {
+			return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+		}
+
+		function formatTime(value) {
+			const [hour, minute] = value.split(':').map(Number);
+			return `${String(hour % 12 || 12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
+		}
+
+		function renderAppointments(appointments) {
+			if (!appointments.length) {
+				appointmentList.innerHTML = '<p class="panel-note" style="padding: 12px 0 20px">No appointments scheduled for this date.</p>';
+				return;
+			}
+			appointmentList.innerHTML = appointments.map((appointment, index) => {
+				const initials = appointment.patientName.split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();
+				const avatarStyle = index % 3 === 1 ? ' pink' : index % 3 === 2 ? ' gold' : '';
+				const statusClass = appointment.status === 'Waiting' ? ' waiting' : appointment.status === 'Up next' ? ' next' : '';
+				const dotClass = appointment.status === 'Waiting' ? ' yellow' : appointment.status === 'Up next' ? ' coral' : '';
+				return `<div class="appointment"><span class="time">${formatTime(appointment.time)}</span><span class="timeline-dot${dotClass}"></span><div class="patient"><div class="patient-avatar${avatarStyle}">${escapeHtml(initials)}</div><div><p class="patient-name">${escapeHtml(appointment.patientName)}</p><span class="patient-type">${escapeHtml(appointment.type)} · ${appointment.duration} min</span></div></div><span class="status${statusClass}">${escapeHtml(appointment.status)}</span></div>`;
+			}).join('');
+		}
+
+		async function loadSchedule() {
+			const response = await fetch(`/api/appointments?date=${encodeURIComponent(selectedDate)}`);
+			if (!response.ok) throw new Error('Unable to load appointments. Is the backend running?');
+			const appointments = await response.json();
+			const date = new Date(`${selectedDate}T12:00:00`);
+			const dateLabel = date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+			const completed = appointments.filter(item => item.status === 'Completed').length;
+			const waiting = appointments.filter(item => item.status === 'Waiting').length;
+			document.getElementById('todayLabel').textContent = dateLabel;
+			document.getElementById('scheduleNote').textContent = `${date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} · ${appointments.length} appointments`;
+			document.getElementById('appointmentCount').textContent = appointments.length;
+			document.getElementById('appointmentNote').textContent = 'Scheduled for this date';
+			document.getElementById('waitingCount').textContent = String(waiting).padStart(2, '0');
+			document.getElementById('completedCount').textContent = completed;
+			document.getElementById('completedNote').textContent = `${appointments.length ? Math.round(completed / appointments.length * 100) : 0}% of this schedule`;
+			document.getElementById('insightTitle').textContent = appointments.length ? `${appointments.length} appointments scheduled` : 'A clear day ahead';
+			document.getElementById('insightText').textContent = waiting ? `${waiting} patient${waiting === 1 ? ' is' : 's are'} currently waiting.` : 'No patients are currently waiting.';
+			renderAppointments(appointments);
+		}
+
+		async function loadCalendar() {
+			const month = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, '0')}`;
+			const response = await fetch(`/api/appointments?month=${month}`);
+			if (!response.ok) throw new Error('Unable to load calendar.');
+			const appointments = await response.json();
+			const eventDays = new Set(appointments.map(appointment => Number(appointment.date.slice(-2))));
+			document.getElementById('calendarMonth').textContent = calendarMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+			calendarDays.replaceChildren();
+			const offset = calendarMonth.getDay();
+			for (let blank = 0; blank < offset; blank += 1) calendarDays.appendChild(document.createElement('span'));
+			const count = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate();
+			for (let day = 1; day <= count; day += 1) {
+				const button = document.createElement('button');
+				const key = `${month}-${String(day).padStart(2, '0')}`;
+				button.className = `day${key === selectedDate ? ' selected' : ''}${eventDays.has(day) ? ' has-event' : ''}`;
+				button.textContent = day;
+				button.addEventListener('click', async () => {
+					selectedDate = key;
+					calendarDays.querySelectorAll('.day').forEach(item => item.classList.remove('selected'));
+					button.classList.add('selected');
+					await loadSchedule();
+				});
+				calendarDays.appendChild(button);
+			}
+		}
+
+		document.getElementById('newAppointment').addEventListener('click', () => {
+			appointmentForm.reset();
+			appointmentForm.elements.date.value = selectedDate;
+			document.getElementById('formError').textContent = '';
+			appointmentDialog.showModal();
+		});
+		document.getElementById('closeAppointmentDialog').addEventListener('click', () => appointmentDialog.close());
+		document.getElementById('previousMonth').addEventListener('click', async () => {
+			calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1);
+			await loadCalendar();
+		});
+		document.getElementById('nextMonth').addEventListener('click', async () => {
+			calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1);
+			await loadCalendar();
+		});
+		appointmentForm.addEventListener('submit', async event => {
+			event.preventDefault();
+			const formData = new FormData(appointmentForm);
+			const payload = Object.fromEntries(formData.entries());
+			payload.duration = Number(payload.duration);
+			try {
+				const response = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+				const result = await response.json();
+				if (!response.ok) throw new Error(result.error || 'Unable to create appointment.');
+				appointmentDialog.close();
+				selectedDate = payload.date;
+				calendarMonth = new Date(`${selectedDate}T12:00:00`);
+				calendarMonth.setDate(1);
+				await Promise.all([loadSchedule(), loadCalendar()]);
+			} catch (error) {
+				document.getElementById('formError').textContent = error.message;
+			}
+		});
+
+		Promise.all([loadSchedule(), loadCalendar()]).catch(error => {
+			document.getElementById('scheduleNote').textContent = error.message;
+		});
 	</script>
 </body>
 </html>
