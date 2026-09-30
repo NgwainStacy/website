@@ -1,13 +1,7 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { randomUUID } = require('node:crypto');
-
-const dataFile = path.join(__dirname, 'appointments.json');
-
-function readAppointments() {
-	return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-}
+const { createDatabase } = require('./database');
 
 function sendJson(response, statusCode, body) {
 	response.writeHead(statusCode, {
@@ -46,8 +40,8 @@ function readBody(request) {
 }
 
 function createServer(options = {}) {
-	const appointmentsFile = options.dataFile || dataFile;
-	return http.createServer(async (request, response) => {
+	const database = createDatabase(options.databaseFile, options.seedFile);
+	const server = http.createServer(async (request, response) => {
 		const url = new URL(request.url, 'http://localhost');
 		try {
 			if (request.method === 'GET' && url.pathname === '/') {
@@ -62,7 +56,6 @@ function createServer(options = {}) {
 			}
 
 			if (url.pathname === '/api/appointments' && request.method === 'GET') {
-				const appointments = JSON.parse(fs.readFileSync(appointmentsFile, 'utf8'));
 				const date = url.searchParams.get('date');
 				const month = url.searchParams.get('month');
 				if (date && !isValidDate(date)) {
@@ -73,8 +66,34 @@ function createServer(options = {}) {
 					sendJson(response, 400, { error: 'Month must use YYYY-MM format.' });
 					return;
 				}
-				const filtered = appointments.filter(item => (!date || item.date === date) && (!month || item.date.startsWith(month)));
-				sendJson(response, 200, filtered);
+				sendJson(response, 200, database.listAppointments(date, month));
+				return;
+			}
+
+			if (url.pathname === '/api/stakeholders' && request.method === 'GET') {
+				const role = url.searchParams.get('role');
+				if (role && !['patient', 'provider', 'staff'].includes(role)) {
+					sendJson(response, 400, { error: 'Role must be patient, provider, or staff.' });
+					return;
+				}
+				sendJson(response, 200, database.listStakeholders(role));
+				return;
+			}
+
+			if (url.pathname === '/api/stakeholders' && request.method === 'POST') {
+				const body = await readBody(request);
+				const person = {
+					name: typeof body.name === 'string' ? body.name.trim() : '',
+					role: body.role,
+					specialty: typeof body.specialty === 'string' ? body.specialty.trim() : '',
+					email: typeof body.email === 'string' ? body.email.trim() : '',
+					phone: typeof body.phone === 'string' ? body.phone.trim() : ''
+				};
+				if (!person.name || person.name.length > 100 || !['patient', 'provider', 'staff'].includes(person.role) || person.specialty.length > 100 || person.email.length > 254 || person.phone.length > 40) {
+					sendJson(response, 400, { error: 'Enter a name (up to 100 characters), valid role, and contact details within their length limits.' });
+					return;
+				}
+				sendJson(response, 201, database.createStakeholder(person));
 				return;
 			}
 
@@ -83,24 +102,11 @@ function createServer(options = {}) {
 				const patientName = typeof body.patientName === 'string' ? body.patientName.trim() : '';
 				const type = typeof body.type === 'string' ? body.type.trim() : '';
 				const validDuration = [15, 30, 45, 60].includes(Number(body.duration));
-				if (!patientName || patientName.length > 100 || !type || type.length > 100 || !isValidDate(body.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(body.time || '') || !validDuration) {
-					sendJson(response, 400, { error: 'Enter a patient name, appointment type, valid date and time, and duration of 15, 30, 45, or 60 minutes.' });
+				if ((!patientName && !body.patientId) || patientName.length > 100 || !type || type.length > 100 || !isValidDate(body.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(body.time || '') || !validDuration) {
+					sendJson(response, 400, { error: 'Enter a patient name or ID, appointment type, valid date and time, and duration of 15, 30, 45, or 60 minutes.' });
 					return;
 				}
-
-				const appointments = JSON.parse(fs.readFileSync(appointmentsFile, 'utf8'));
-				const appointment = {
-					id: randomUUID(),
-					date: body.date,
-					time: body.time,
-					patientName,
-					type,
-					duration: Number(body.duration),
-					status: 'Confirmed'
-				};
-				appointments.push(appointment);
-				appointments.sort((first, second) => `${first.date}T${first.time}`.localeCompare(`${second.date}T${second.time}`));
-				fs.writeFileSync(appointmentsFile, `${JSON.stringify(appointments, null, 2)}\n`);
+				const appointment = database.createAppointment({ ...body, patientName, type });
 				sendJson(response, 201, appointment);
 				return;
 			}
@@ -110,6 +116,8 @@ function createServer(options = {}) {
 			if (!response.headersSent) sendJson(response, error.statusCode || 500, { error: error.statusCode ? error.message : 'Internal server error.' });
 		}
 	});
+	server.on('close', () => database.close());
+	return server;
 }
 
 if (require.main === module) {

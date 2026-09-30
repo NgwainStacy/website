@@ -1,0 +1,27 @@
+{
+	"stakeholders": [
+		{
+			"id": "provider-riya-mehta",
+			"name": "Dr. Riya Mehta",
+			"role": "provider",
+			"specialty": "General physician",
+			"email": "riya.mehta@example.test",
+			"phone": ""
+		},
+		{
+			"id": "staff-clinic-admin",
+			"name": "Clinic Administrator",
+			"role": "staff",
+			"specialty": "Clinic administration",
+			"email": "admin@example.test",
+			"phone": ""
+		}
+	],
+	"appointments": [
+		{"id":"demo-1","date":"2026-09-30","time":"09:00","patientName":"Amelia Stone","type":"Annual checkup","duration":30,"status":"Completed"},
+		{"id":"demo-2","date":"2026-09-30","time":"09:30","patientName":"James Wilson","type":"Follow-up consultation","duration":30,"status":"Completed"},
+		{"id":"demo-3","date":"2026-09-30","time":"10:15","patientName":"Liam Kim","type":"Vaccination","duration":15,"status":"Waiting"},
+		{"id":"demo-4","date":"2026-09-30","time":"11:00","patientName":"Nora Patel","type":"New patient consultation","duration":45,"status":"Up next"},
+		{"id":"demo-5","date":"2026-09-30","time":"11:45","patientName":"Daniel Reed","type":"Lab results review","duration":30,"status":"Confirmed"}
+	]
+}
